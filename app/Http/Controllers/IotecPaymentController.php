@@ -36,7 +36,13 @@ class IotecPaymentController extends Controller
     {
         $user = Auth::user();
 
-      
+        $request->validate([
+        'payer' => 'required|string', 
+        'amount' => 'required|numeric|min:1',
+        'package_id' => 'required|integer',
+        ]);
+
+    try {
 
         $paymentTransaction = PaymentTransaction::create([
             'user_id' => $user->id,
@@ -48,12 +54,49 @@ class IotecPaymentController extends Controller
             'updated_at' => Carbon::now(),
         ]);
 
-        return response()->json([
-            'id' => $user->id,
-            'name' => $user->name,
-            "trID" => $paymentTransaction->id
-        ]);
+        $accessToken = $this->getIotecAccessToken();
 
+        $payload = [
+            "category" => "MobileMoney",
+            "currency" => "ITX",
+            "walletId" => env('IOTEC_WALLET_ID'),
+            "externalId" => uniqid(),
+            "payer" => $request->payer,
+            "amount" => $request->amount,
+            "payerNote" => "Checkout Payment",
+            "payeeNote" => "Order Payment"
+        ];
+
+        $response = Http::withToken($accessToken)
+            ->post(env('IOTEC_API_URL') . '/collections/collect', $payload);
+
+        if ($response->successful()) {
+            $responseData = $response->json();
+
+            // Update the PaymentTransaction record with the transaction ID from Iotec
+            $paymentTransaction->update([
+                'order_id' => $responseData['transactionId'],
+            ]);
+
+            return response()->json([
+                'message' => 'Payment initiated successfully.',
+                'transaction_id' => $responseData['transactionId'],
+                'payment_transaction_id' => $paymentTransaction->id,
+            ], 200);
+        } else {
+            // If the payment initiation fails, update the status to 'failed'
+            $paymentTransaction->update([
+                'payment_status' => 'failed',
+            ]);
+
+            return response()->json([
+                'error' => 'Failed to initiate payment.',
+                'data' => $response->json(),
+            ], 400);
+        }
+    } catch (\Exception $e) {
+        return response()->json(['error' => $e->getMessage()], 500);
+    }
 }
 
     public function checkPaymentStatus(Request $request, $transactionId, $package_id)
