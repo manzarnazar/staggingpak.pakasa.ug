@@ -49,7 +49,7 @@ class IotecPaymentController extends Controller
             'package_id' => $request->package_id,
             'amount' => $request->amount,
             'payment_status' => 'pending',
-            'transaction_id' => null, // Will be updated later
+            'order_id' => null, // Will be updated later
             'created_at' => Carbon::now(),
             'updated_at' => Carbon::now(),
         ]);
@@ -111,13 +111,13 @@ public function checkPaymentStatus($transactionId, $package_id)
         $responseData = $response->json();
 
         // Check if the payment was successful
-        if ($response->successful() && $responseData['statusCode'] === 'success') {
-            // // Assign the package to the user
-            // $assignPackageResponse = $this->assignPackage($transactionId, $user->id, $package_id);
+        if ($response->successful() && $responseData['status'] === 'success') {
+            // Assign the package to the user
+            $assignPackageResponse = $this->assignPackage($transactionId, $user->id, $package_id);
 
-            // if ($assignPackageResponse['error']) {
-            //     return response()->json(['error' => $assignPackageResponse['message']], 500);
-            // }
+            if ($assignPackageResponse['error']) {
+                return response()->json(['error' => $assignPackageResponse['message']], 500);
+            }
 
             return response()->json([
                 'message' => 'Payment successful and package assigned.',
@@ -181,7 +181,7 @@ public function checkPaymentStatus($transactionId, $package_id)
      */
     private function assignPackage($payment_transaction_id, $user_id, $package_id) {
         try {
-            $paymentTransactionData = PaymentTransaction::where('id', $payment_transaction_id)->first();
+            $paymentTransactionData = PaymentTransaction::where('order_id', $payment_transaction_id)->first();
             if ($paymentTransactionData == null) {
                 Log::error("Payment Transaction id not found");
                 return [
