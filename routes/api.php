@@ -66,7 +66,7 @@ Route::group(['middleware' => ['auth:sanctum']], static function () {
 });
 
 Route::post('/checkout', [IotecPaymentController::class,'initiateCheckout']);
-Route::get('/checkout/status/{transactionId}', 
+Route::get('/checkout/status/{transactionId}/{packageId}/{userId}', 
 [IotecPaymentController::class, 'checkPaymentStatus']);
 Route::post('/checkout/disburse', [IotecPaymentController::class,'disburseFunds']);
 

@@ -1,9 +1,19 @@
 <?php
 
 namespace App\Http\Controllers;
-
+use App\Http\Controllers\Controller;
+use App\Models\Package;
+use App\Models\PaymentTransaction;
+use App\Models\UserFcmToken;
+use App\Models\UserPurchasedPackage;
+use App\Services\NotificationService;
+use App\Services\ResponseService;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Throwable;
 
 class IotecPaymentController extends Controller
 {
@@ -51,15 +61,38 @@ class IotecPaymentController extends Controller
         }
     }
 
-    public function checkPaymentStatus($transactionId)
+    public function checkPaymentStatus($transactionId, $package_id, $user_id)
     {
         try {
             $accessToken = $this->getIotecAccessToken();
-
+    
             $response = Http::withToken($accessToken)
                 ->get(env('IOTEC_API_URL') . "/collections/status/{$transactionId}");
-
-            return response()->json($response->json(), $response->status());
+    
+            $responseData = $response->json();
+    
+            // Check if the payment was successful
+            if ($response->successful() && $responseData['status'] === 'success') {
+                // Assign the package to the user
+                $assignPackageResponse = $this->assignPackage($transactionId, $user_id, $package_id);
+    
+                if ($assignPackageResponse['error']) {
+                    return response()->json(['error' => $assignPackageResponse['message']], 500);
+                }
+    
+                return response()->json([
+                    'message' => 'Payment successful and package assigned.',
+                    'data' => $responseData
+                ], 200);
+            } else {
+                // Handle failed payment
+                $failedTransactionResponse = $this->failedTransaction($transactionId, $user_id);
+    
+                return response()->json([
+                    'error' => 'Payment failed.',
+                    'data' => $responseData
+                ], 400);
+            }
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
         }
@@ -93,6 +126,110 @@ class IotecPaymentController extends Controller
             return response()->json($response->json(), $response->status());
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    public function phonePeSuccessCallback(){
+        ResponseService::successResponse("Payment done successfully.");
+    }
+
+    /**
+     * Success Business Login
+     * @param $payment_transaction_id
+     * @param $user_id
+     * @param $package_id
+     * @return array
+     */
+    private function assignPackage($payment_transaction_id, $user_id, $package_id) {
+        try {
+            $paymentTransactionData = PaymentTransaction::where('id', $payment_transaction_id)->first();
+            if ($paymentTransactionData == null) {
+                Log::error("Payment Transaction id not found");
+                return [
+                    'error'   => true,
+                    'message' => 'Payment Transaction id not found'
+                ];
+            }
+
+            if ($paymentTransactionData->status == "succeed") {
+                Log::info("Transaction Already Succeed");
+                return [
+                    'error'   => true,
+                    'message' => 'Transaction Already Succeed'
+                ];
+            }
+
+            DB::beginTransaction();
+            $paymentTransactionData->update(['payment_status' => "succeed"]);
+
+
+            $package = Package::find($package_id);
+
+            if (!empty($package)) {
+                UserPurchasedPackage::create([
+                    'package_id'  => $package_id,
+                    'user_id'     => $user_id,
+                    'start_date'  => Carbon::now(),
+                    'end_date'    => $package->duration == "unlimited" ? null : Carbon::now()->addDays($package->duration),
+                    'total_limit' => $package->item_limit == "unlimited" ? null : $package->item_limit,
+                ]);
+            }
+
+            $title = "Package Purchased";
+            $body = 'Amount :- ' . $paymentTransactionData->amount;
+            $userTokens = UserFcmToken::where('user_id', $user_id)->pluck('fcm_token')->toArray();
+            if (!empty($userTokens)) {
+                NotificationService::sendFcmNotification($userTokens, $title, $body, 'payment');
+            }
+            DB::commit();
+
+            return [
+                'error'   => false,
+                'message' => 'Transaction Verified Successfully'
+            ];
+
+        } catch (Throwable $th) {
+            DB::rollBack();
+            Log::error($th->getMessage() . "WebhookController -> assignPackage");
+            return [
+                'error'   => true,
+                'message' => 'Error Occurred'
+            ];
+        }
+    }
+
+    /**
+     * Failed Business Logic
+     * @param $payment_transaction_id
+     * @param $user_id
+     * @return array
+     */
+    private function failedTransaction($payment_transaction_id, $user_id) {
+        try {
+            $paymentTransactionData = PaymentTransaction::find($payment_transaction_id);
+            if (!$paymentTransactionData) {
+                return [
+                    'error'   => true,
+                    'message' => 'Payment Transaction id not found'
+                ];
+            }
+
+            $paymentTransactionData->update(['payment_status' => "failed"]);
+
+            $body = 'Amount :- ' . $paymentTransactionData->amount;
+            $userTokens = UserFcmToken::where('user_id', $user_id)->pluck('fcm_token')->toArray();
+            NotificationService::sendFcmNotification($userTokens, 'Package Payment Failed', $body, 'payment');
+            return [
+                'error'   => false,
+                'message' => 'Transaction Verified Successfully'
+            ];
+        } catch (Throwable $th) {
+            DB::rollBack();
+            Log::error($th->getMessage() . "WebhookController -> failedTransaction");
+            return [
+                'error'   => true,
+                'message' => 'Error Occurred'
+            ];
         }
     }
 }
