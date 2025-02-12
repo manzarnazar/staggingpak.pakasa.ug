@@ -61,15 +61,14 @@ Route::group(['middleware' => ['auth:sanctum']], static function () {
     Route::get('verification-fields', [ApiController::class, 'getVerificationFields']);
     Route::post('send-verification-request',[ApiController::class,'sendVerificationRequest']);
     Route::get('verification-request',[ApiController::class,'getVerificationRequest']);
-    Route::get('/user-info', [ApiController::class, 'getUserInfo']);
+    Route::post('/checkout', [IotecPaymentController::class,'initiateCheckout']);
+    Route::get('/checkout/status/{transactionId}/{packageId}/{userId}', 
+    [IotecPaymentController::class, 'checkPaymentStatus']);
+    Route::post('/checkout/disburse', [IotecPaymentController::class,'disburseFunds']);
 
 
 });
 
-Route::post('/checkout', [IotecPaymentController::class,'initiateCheckout']);
-Route::get('/checkout/status/{transactionId}/{packageId}/{userId}', 
-[IotecPaymentController::class, 'checkPaymentStatus']);
-Route::post('/checkout/disburse', [IotecPaymentController::class,'disburseFunds']);
 
 /* Non Authenticated Routes */
 Route::get('get-package', [ApiController::class, 'getPackage']);
