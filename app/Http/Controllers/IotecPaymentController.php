@@ -11,6 +11,7 @@ use App\Services\ResponseService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Throwable;
@@ -33,7 +34,7 @@ class IotecPaymentController extends Controller
     }
     public function initiateCheckout(Request $request)
     {
-        $user = $request->user();
+        $user = Auth::user();
 
         $request->validate([
         'payer' => 'required|string', 
@@ -100,7 +101,7 @@ class IotecPaymentController extends Controller
 
     public function checkPaymentStatus(Request $request, $transactionId, $package_id)
     {
-        $user = $request->user();
+        $user = Auth::user();
         try {
             $accessToken = $this->getIotecAccessToken();
     
