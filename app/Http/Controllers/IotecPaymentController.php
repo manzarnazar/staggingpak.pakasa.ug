@@ -111,7 +111,7 @@ public function checkPaymentStatus($transactionId, $package_id)
         $responseData = $response->json();
 
         // Check if the payment was successful
-        if ($response->successful() && $responseData['status'] === 'success') {
+        if ($response->successful() && isset($responseData['data']['statusCode']) && $responseData['data']['statusCode'] === 'success') { // Corrected here
             // Assign the package to the user
             $assignPackageResponse = $this->assignPackage($transactionId, $user->id, $package_id);
 
@@ -121,15 +121,15 @@ public function checkPaymentStatus($transactionId, $package_id)
 
             return response()->json([
                 'message' => 'Payment successful and package assigned.',
-                'data' => $responseData
+                'data' => $responseData['data'] // Return only the nested 'data'
             ], 200);
         } else {
             // Handle failed payment
-            $failedTransactionResponse = $this->failedTransaction($transactionId, $user->id); // Corrected here
+            $failedTransactionResponse = $this->failedTransaction($transactionId, $user->id);
 
             return response()->json([
                 'error' => 'Payment failed.',
-                'data' => $responseData
+                'data' => $responseData['data'] // Return only the nested 'data'
             ], 400);
         }
     } catch (\Exception $e) {
