@@ -102,6 +102,7 @@ class IotecPaymentController extends Controller
 public function checkPaymentStatus($transactionId, $package_id)
 {
     $user = Auth::user();
+
     try {
         $accessToken = $this->getIotecAccessToken();
 
@@ -205,7 +206,8 @@ public function checkPaymentStatus($transactionId, $package_id)
             $paymentTransactionData->update(['payment_status' => "succeed"]);
 
 
-            $package = Package::find($package_id);
+            $package = Package::where('id',$package_id)->first();
+            // $paymentTransactionData = PaymentTransaction::where('order_id', $payment_transaction_id)->first();
 
             if (!empty($package)) {
                 UserPurchasedPackage::create([
@@ -227,6 +229,7 @@ public function checkPaymentStatus($transactionId, $package_id)
 
             return [
                 'error'   => false,
+                'pkg' => $package->final_price,
                 'message' => 'Transaction Verified Successfully'
             ];
 
