@@ -1,0 +1,38 @@
+[
+    {
+        "relation": [
+            "delegate_permission/common.handle_all_urls"
+        ],
+        "target": {
+            "namespace": "android_app",
+            "package_name": "com.pakasa.app",
+            "sha256_cert_fingerprints": [
+                "ed:2b:85:72:98:34:bc:3e:95:e8:07:12:66:87:3b:0b:a2:05:52:f6:20:bd:39:f4:42:ee:71:02:cd:e8:85:be"
+            ]
+        }
+    },
+    {
+        "relation": [
+            "delegate_permission/common.handle_all_urls"
+        ],
+        "target": {
+            "namespace": "android_app",
+            "package_name": "com.pakasa.app",
+            "sha256_cert_fingerprints": [
+                "25:7A:19:DE:C7:5B:96:F7:D5:50:23:3A:81:C7:6C:8F:97:2A:3F:D0:8C:04:CC:C5:22:AA:98:4E:52:09:9E:65"
+            ]
+        }
+    },
+    {
+        "relation": [
+            "delegate_permission/common.handle_all_urls"
+        ],
+        "target": {
+            "namespace": "android_app",
+            "package_name": "com.pakasa.app",
+            "sha256_cert_fingerprints": [
+                "0D:48:46:9D:30:A2:30:5D:45:73:53:D5:73:80:A0:DE:A0:5C:F6:65:B8:98:D8:4E:3F:49:2E:4A:13:73:AE:A0"
+            ]
+        }
+    }
+]
