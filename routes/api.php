@@ -61,6 +61,7 @@ Route::group(['middleware' => ['auth:sanctum']], static function () {
     Route::get('verification-fields', [ApiController::class, 'getVerificationFields']);
     Route::post('send-verification-request',[ApiController::class,'sendVerificationRequest']);
     Route::get('verification-request',[ApiController::class,'getVerificationRequest']);
+    Route::middleware('auth:sanctum')->get('/user-info', [ApiController::class, 'getUserInfo']);
 
 
 });

@@ -1283,6 +1283,19 @@ class ApiController extends Controller {
             ResponseService::errorResponse();
         }
     }
+    public function getUserInfo(Request $request)
+    {
+        $user = $request->user(); // Get authenticated user
+
+        if (!$user) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        return response()->json([
+            'id' => $user->id,
+            'name' => $user->name
+        ]);
+    }
 
     public function getPaymentIntent(Request $request) {
         $validator = Validator::make($request->all(), [
