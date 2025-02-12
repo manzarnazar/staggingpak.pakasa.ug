@@ -122,6 +122,7 @@ public function checkPaymentStatus($transactionId, $package_id)
             return response()->json([
                 'message' => 'Payment successful and package assigned.',
                 'status' => 'success',
+                'pkgid' => $package_id,
                 "assignPackage" => $assignPackageResponse,
                 'data' => $responseData
             ], 200);
@@ -193,7 +194,7 @@ public function checkPaymentStatus($transactionId, $package_id)
             }
 
             if ($paymentTransactionData->status == "succeed") {
-                Log::info("Transaction Already Succeed");
+
                 return [
                     'error'   => true,
                     'message' => 'Transaction Already Succeed'
