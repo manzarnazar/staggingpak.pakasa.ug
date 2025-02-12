@@ -113,16 +113,8 @@ public function checkPaymentStatus($transactionId, $package_id)
         // Log the full response for debugging
         Log::info('API Response:', $responseData);
 
-        // Check if the response contains the 'data' key
-        if (!isset($responseData['data'])) {
-            return response()->json([
-                'error' => 'Invalid API response structure: missing "data" key.',
-                'full_response' => $responseData // Include the full response for debugging
-            ], 500);
-        }
-
         // Check if the payment was successful
-        if ($response->successful() && isset($responseData['data']['statusCode']) && $responseData['data']['statusCode'] === 'success') {
+        if ($response->successful() && isset($responseData['statusCode']) && $responseData['statusCode'] === 'success') {
             // Assign the package to the user
             $assignPackageResponse = $this->assignPackage($transactionId, $user->id, $package_id);
 
@@ -132,7 +124,7 @@ public function checkPaymentStatus($transactionId, $package_id)
 
             return response()->json([
                 'message' => 'Payment successful and package assigned.',
-                'data' => $responseData['data']
+                'data' => $responseData // Return the full response
             ], 200);
         } else {
             // Handle failed payment
@@ -140,7 +132,7 @@ public function checkPaymentStatus($transactionId, $package_id)
 
             return response()->json([
                 'error' => 'Payment failed.',
-                'data' => $responseData['data']
+                'data' => $responseData // Return the full response
             ], 400);
         }
     } catch (\Exception $e) {
