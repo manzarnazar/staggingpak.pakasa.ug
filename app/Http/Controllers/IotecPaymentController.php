@@ -111,7 +111,7 @@ public function checkPaymentStatus($transactionId, $package_id)
         $responseData = $response->json();
 
         // Check if the payment was successful
-        if ($response->successful() && $responseData['status'] === 'success') {
+        if ($response->successful() && $responseData['statusCode'] === 'success') {
             // Assign the package to the user
             $assignPackageResponse = $this->assignPackage($transactionId, $user->id, $package_id);
 
