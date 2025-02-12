@@ -81,7 +81,7 @@ class IotecPaymentController extends Controller
             return response()->json([
                 'message' => 'Payment initiated successfully.',
                 'transaction_id' => $responseData['id'],
-                'payment_transaction_id' => $paymentTransaction->id,
+                'status' => 'success',
             ], 200);
         } else {
             // If the payment initiation fails, update the status to 'failed'
@@ -110,9 +110,9 @@ public function checkPaymentStatus($transactionId, $package_id)
 
         $responseData = $response->json();
 
-        // Check if the payment was successful
+
         if ($response->successful() && $responseData['statusCode'] === 'success') {
-            // Assign the package to the user
+
             $assignPackageResponse = $this->assignPackage($transactionId, $user->id, $package_id);
 
             if ($assignPackageResponse['error']) {
@@ -121,10 +121,11 @@ public function checkPaymentStatus($transactionId, $package_id)
 
             return response()->json([
                 'message' => 'Payment successful and package assigned.',
+                'status' => 'success',
                 'data' => $responseData
             ], 200);
         } else {
-            // Handle failed payment
+
             $failedTransactionResponse = $this->failedTransaction($transactionId, $user->id); // Corrected here
 
             return response()->json([
