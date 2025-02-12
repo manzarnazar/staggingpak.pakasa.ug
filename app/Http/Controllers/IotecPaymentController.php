@@ -99,43 +99,43 @@ class IotecPaymentController extends Controller
     }
 }
 
-public function checkPaymentStatus($transactionId, $package_id)
-{
-    $user = Auth::user();
-    try {
-        $accessToken = $this->getIotecAccessToken();
-
-        $response = Http::withToken($accessToken)
-            ->get(env('IOTEC_API_URL') . "/collections/status/{$transactionId}");
-
-        $responseData = $response->json();
-
-        // Check if the payment was successful
-        if ($response->successful() && $responseData['statusCode'] === 'success') { // Corrected here
-            // Assign the package to the user
-            $assignPackageResponse = $this->assignPackage($transactionId, $user->id, $package_id);
-
-            if ($assignPackageResponse['error']) {
-                return response()->json(['error' => $assignPackageResponse['message']], 500);
+    public function checkPaymentStatus($transactionId, $package_id)
+    {
+        $user = Auth::user();
+        try {
+            $accessToken = $this->getIotecAccessToken();
+    
+            $response = Http::withToken($accessToken)
+                ->get(env('IOTEC_API_URL') . "/collections/status/{$transactionId}");
+    
+            $responseData = $response->json();
+    
+            // Check if the payment was successful
+            if ($response->successful() && $responseData['status'] === 'success') {
+                // Assign the package to the user
+                $assignPackageResponse = $this->assignPackage($transactionId, $user->id, $package_id);
+    
+                if ($assignPackageResponse['error']) {
+                    return response()->json(['error' => $assignPackageResponse['message']], 500);
+                }
+    
+                return response()->json([
+                    'message' => 'Payment successful and package assigned.',
+                    'data' => $responseData
+                ], 200);
+            } else {
+                // Handle failed payment
+                $failedTransactionResponse = $this->failedTransaction($transactionId, $$user->id);
+    
+                return response()->json([
+                    'error' => 'Payment failed.',
+                    'data' => $responseData
+                ], 400);
             }
-
-            return response()->json([
-                'message' => 'Payment successful and package assigned.',
-                'data' => $responseData
-            ], 200);
-        } else {
-            // Handle failed payment
-            $failedTransactionResponse = $this->failedTransaction($transactionId, $user->id);
-
-            return response()->json([
-                'error' => 'Payment failed.',
-                'data' => $responseData
-            ], 400);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
         }
-    } catch (\Exception $e) {
-        return response()->json(['error' => $e->getMessage()], 500);
     }
-}
 
 
     public function disburseFunds(Request $request)
