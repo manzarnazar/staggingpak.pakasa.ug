@@ -75,12 +75,12 @@ class IotecPaymentController extends Controller
 
             // Update the PaymentTransaction record with the transaction ID from Iotec
             $paymentTransaction->update([
-                'order_id' => $responseData['transactionId'],
+                'order_id' => $responseData['id'],
             ]);
 
             return response()->json([
                 'message' => 'Payment initiated successfully.',
-                'transaction_id' => $responseData['transactionId'],
+                'transaction_id' => $responseData['id'],
                 'payment_transaction_id' => $paymentTransaction->id,
             ], 200);
         } else {
