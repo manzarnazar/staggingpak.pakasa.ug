@@ -122,6 +122,7 @@ public function checkPaymentStatus($transactionId, $package_id)
             return response()->json([
                 'message' => 'Payment successful and package assigned.',
                 'status' => 'success',
+                "assignPackage" => $assignPackageResponse,
                 'data' => $responseData
             ], 200);
         } else {
