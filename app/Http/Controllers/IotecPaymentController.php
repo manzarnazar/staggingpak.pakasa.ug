@@ -112,12 +112,12 @@ public function checkPaymentStatus($transactionId, $package_id)
 
         // Check if the payment was successful
         if ($response->successful() && $responseData['status'] === 'success') {
-            // Assign the package to the user
-            $assignPackageResponse = $this->assignPackage($transactionId, $user->id, $package_id);
+            // // Assign the package to the user
+            // $assignPackageResponse = $this->assignPackage($transactionId, $user->id, $package_id);
 
-            if ($assignPackageResponse['error']) {
-                return response()->json(['error' => $assignPackageResponse['message']], 500);
-            }
+            // if ($assignPackageResponse['error']) {
+            //     return response()->json(['error' => $assignPackageResponse['message']], 500);
+            // }
 
             return response()->json([
                 'message' => 'Payment successful and package assigned.',
