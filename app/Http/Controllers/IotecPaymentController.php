@@ -99,7 +99,7 @@ class IotecPaymentController extends Controller
     }
 }
 
-    public function checkPaymentStatus(Request $request, $transactionId, $package_id)
+    public function checkPaymentStatus($transactionId, $package_id)
     {
         $user = Auth::user();
         try {
@@ -113,7 +113,7 @@ class IotecPaymentController extends Controller
             // Check if the payment was successful
             if ($response->successful() && $responseData['status'] === 'success') {
                 // Assign the package to the user
-                $assignPackageResponse = $this->assignPackage($transactionId, $$user->id, $package_id);
+                $assignPackageResponse = $this->assignPackage($transactionId, $user->id, $package_id);
     
                 if ($assignPackageResponse['error']) {
                     return response()->json(['error' => $assignPackageResponse['message']], 500);
