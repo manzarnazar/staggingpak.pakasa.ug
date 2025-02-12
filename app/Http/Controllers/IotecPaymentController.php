@@ -110,11 +110,8 @@ public function checkPaymentStatus($transactionId, $package_id)
 
         $responseData = $response->json();
 
-        // Log the full response for debugging
-        Log::info('API Response:', $responseData);
-
         // Check if the payment was successful
-        if ($response->successful() && isset($responseData['statusCode']) && $responseData['statusCode'] === 'success') {
+        if ($response->successful() && $responseData['statusCode'] === 'success') {
             // Assign the package to the user
             $assignPackageResponse = $this->assignPackage($transactionId, $user->id, $package_id);
 
@@ -124,15 +121,15 @@ public function checkPaymentStatus($transactionId, $package_id)
 
             return response()->json([
                 'message' => 'Payment successful and package assigned.',
-                'data' => $responseData // Return the full response
+                'data' => $responseData
             ], 200);
         } else {
             // Handle failed payment
-            $failedTransactionResponse = $this->failedTransaction($transactionId, $user->id);
+            $failedTransactionResponse = $this->failedTransaction($transactionId, $user->id); // Corrected here
 
             return response()->json([
                 'error' => 'Payment failed.',
-                'data' => $responseData // Return the full response
+                'data' => $responseData
             ], 400);
         }
     } catch (\Exception $e) {
