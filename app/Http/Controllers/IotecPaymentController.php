@@ -36,105 +36,10 @@ class IotecPaymentController extends Controller
     {
         $user = Auth::user();
 
-        $request->validate([
-        'payer' => 'required|string', 
-        'amount' => 'required|numeric|min:1',
-        'package_id' => 'required|integer',
-    ]);
-
-    try {
-
-        $paymentTransaction = PaymentTransaction::create([
-            'user_id' => $user->id,
-            'package_id' => $request->package_id,
-            'amount' => $request->amount,
-            'payment_status' => 'pending',
-            'transaction_id' => null, // Will be updated later
-            'created_at' => Carbon::now(),
-            'updated_at' => Carbon::now(),
+        return response()->json([
+            'id' => $user->id,
+            'name' => $user->name
         ]);
-
-        $accessToken = $this->getIotecAccessToken();
-
-        $payload = [
-            "category" => "MobileMoney",
-            "currency" => "ITX",
-            "walletId" => env('IOTEC_WALLET_ID'),
-            "externalId" => uniqid(),
-            "payer" => $request->payer,
-            "amount" => $request->amount,
-            "payerNote" => "Checkout Payment",
-            "payeeNote" => "Order Payment"
-        ];
-
-        $response = Http::withToken($accessToken)
-            ->post(env('IOTEC_API_URL') . '/collections/collect', $payload);
-
-        if ($response->successful()) {
-            $responseData = $response->json();
-
-            // Update the PaymentTransaction record with the transaction ID from Iotec
-            $paymentTransaction->update([
-                'transaction_id' => $responseData['transactionId'],
-            ]);
-
-            return response()->json([
-                'message' => 'Payment initiated successfully.',
-                'transaction_id' => $responseData['transactionId'],
-                'payment_transaction_id' => $paymentTransaction->id,
-            ], 200);
-        } else {
-            // If the payment initiation fails, update the status to 'failed'
-            $paymentTransaction->update([
-                'payment_status' => 'failed',
-            ]);
-
-            return response()->json([
-                'error' => 'Failed to initiate payment.',
-                'data' => $response->json(),
-            ], 400);
-        }
-    } catch (\Exception $e) {
-        return response()->json(['error' => $e->getMessage()], 500);
-    }
-}
-
-    public function checkPaymentStatus(Request $request, $transactionId, $package_id)
-    {
-        $user = Auth::user();
-        try {
-            $accessToken = $this->getIotecAccessToken();
-    
-            $response = Http::withToken($accessToken)
-                ->get(env('IOTEC_API_URL') . "/collections/status/{$transactionId}");
-    
-            $responseData = $response->json();
-    
-            // Check if the payment was successful
-            if ($response->successful() && $responseData['status'] === 'success') {
-                // Assign the package to the user
-                $assignPackageResponse = $this->assignPackage($transactionId, $$user->id, $package_id);
-    
-                if ($assignPackageResponse['error']) {
-                    return response()->json(['error' => $assignPackageResponse['message']], 500);
-                }
-    
-                return response()->json([
-                    'message' => 'Payment successful and package assigned.',
-                    'data' => $responseData
-                ], 200);
-            } else {
-                // Handle failed payment
-                $failedTransactionResponse = $this->failedTransaction($transactionId, $$user->id);
-    
-                return response()->json([
-                    'error' => 'Payment failed.',
-                    'data' => $responseData
-                ], 400);
-            }
-        } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
-        }
     }
 
 
