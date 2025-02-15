@@ -134,13 +134,13 @@ public function checkPaymentStatus($transactionId, $package_id)
             return response()->json([
                 'error' => 'Payment failed.',
                 'data' => $responseData
-            ], 400);
+            ],200);
         }
-        else if ($response->successful() && $responseData['statusCode'] === 'failed')  {
+        else if ($response->successful() && $responseData['statusCode'] === 'pending')  {
             return response()->json([
                 'status' => 'pending',
                 'data' => $responseData
-            ]);
+            ],200);
         }
         else{
             $failedTransactionResponse = $this->failedTransaction($transactionId, $user->id); // Corrected here
