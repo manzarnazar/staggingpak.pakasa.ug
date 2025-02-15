@@ -127,8 +127,22 @@ public function checkPaymentStatus($transactionId, $package_id)
                 "assignPackage" => $assignPackageResponse,
                 'data' => $responseData
             ], 200);
-        } else {
+        } else if ($response->successful() && $responseData['statusCode'] === 'failed')  {
 
+            $failedTransactionResponse = $this->failedTransaction($transactionId, $user->id); // Corrected here
+
+            return response()->json([
+                'error' => 'Payment failed.',
+                'data' => $responseData
+            ], 400);
+        }
+        else if ($response->successful() && $responseData['statusCode'] === 'failed')  {
+            return response()->json([
+                'status' => 'pending',
+                'data' => $responseData
+            ]);
+        }
+        else{
             $failedTransactionResponse = $this->failedTransaction($transactionId, $user->id); // Corrected here
 
             return response()->json([
@@ -207,7 +221,7 @@ public function checkPaymentStatus($transactionId, $package_id)
 
 
             $package = Package::where('id',$package_id)->first();
-            // $paymentTransactionData = PaymentTransaction::where('order_id', $payment_transaction_id)->first();
+            
 
             if (!empty($package)) {
                 UserPurchasedPackage::create([
