@@ -142,14 +142,6 @@ public function checkPaymentStatus($transactionId, $package_id)
                 'data' => $responseData
             ],200);
         }
-        else{
-            $failedTransactionResponse = $this->failedTransaction($transactionId, $user->id); // Corrected here
-
-            return response()->json([
-                'error' => 'Payment failed.',
-                'data' => $responseData
-            ], 400);
-        }
     } catch (\Exception $e) {
         return response()->json(['error' => $e->getMessage()], 500);
     }
