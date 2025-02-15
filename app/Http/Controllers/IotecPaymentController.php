@@ -129,7 +129,11 @@ public function checkPaymentStatus($transactionId, $package_id)
             ], 200);
         } else if ($response->successful() && $responseData['statusCode'] === 'failed')  {
 
-            $failedTransactionResponse = $this->failedTransaction($transactionId, $user->id); // Corrected here
+            $paymentTransactionData = PaymentTransaction::where('order_id', $transactionId)->first();
+            DB::beginTransaction();
+            $paymentTransactionData->update(['payment_status' => "failed"]);
+
+            // $failedTransactionResponse = $this->failedTransaction($transactionId, $user->id); // Corrected here
 
             return response()->json([
                 'error' => 'Payment failed.',
